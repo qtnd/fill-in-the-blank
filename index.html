@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2196f3">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fill in the blanks</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+      margin: 0;
+    }
+
+    .masked-word {
+      font-size: 32px;
+      letter-spacing: 8px;
+      margin: 20px;
+      word-wrap: break-word;
+    }
+
+    .hearts {
+      font-size: 24px;
+      color: red;
+    }
+
+    .letter-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .letter-buttons button {
+      flex: 1 0 60px;
+      max-width: 70px;
+      padding: 12px;
+      font-size: 18px;
+      cursor: pointer;
+      box-sizing: border-box;
+      min-height: 48px;
+    }
+
+    .used-letter {
+      background-color: #ccc;
+      color: #888;
+      pointer-events: none;
+    }
+
+    #feedback {
+      font-weight: bold;
+      margin: 10px;
+    }
+
+    #new-game {
+      display: none;
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+
+    #score {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    #high-score {
+      font-size: 16px;
+      color: #555;
+    }
+
+    #hint {
+      font-style: italic;
+      margin: 10px;
+      font-size: 18px;
+      color: #555;
+    }
+
+    @media (max-width: 600px) {
+      .masked-word {
+        font-size: 24px;
+        letter-spacing: 5px;
+      }
+
+      .letter-buttons button {
+        flex: 1 0 22%;
+        font-size: 16px;
+        padding: 10px;
+      }
+
+      #score, #high-score {
+        font-size: 16px;
+      }
+
+      #hint {
+        font-size: 16px;
+      }
+
+      #new-game {
+        font-size: 14px;
+        padding: 8px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Fill in the blanks</h1>
+  <div id="score">Score: 0</div>
+  <div id="high-score"></div>
+  <div id="hearts" class="hearts">♥ ♥ ♥</div>
+  <div id="hint"></div>
+  <div id="masked-word" class="masked-word"></div>
+  <div class="letter-buttons" id="letter-buttons"></div>
+  <p id="feedback"></p>
+  <button id="new-game" onclick="startGame()">Nouvelle partie</button>
+
+  <script>
+    const wordsWithHints = [
+       { word: "apple", hint: "Un fruit rouge ou vert" },
+      { word: "house", hint: "Lieu de vie" },
+      { word: "chair", hint: "Pour s'asseoir" },
+      { word: "table", hint: "Pour manger" },
+      { word: "water", hint: "Boisson indispensable" },
+      { word: "school", hint: "Lieu d'apprentissage" },
+      { word: "sun", hint: "Étoile du système solaire" },
+      { word: "moon", hint: "Satellite de la Terre" },
+      { word: "book", hint: "Contient des pages et des mots" },
+      { word: "pen", hint: "Pour écrire" },
+      { word: "dog", hint: "Animal domestique fidèle" },
+      { word: "cat", hint: "Animal qui aime dormir" },
+      { word: "bird", hint: "Animal qui vole" },
+      { word: "milk", hint: "Boisson blanche" },
+      { word: "bread", hint: "Souvent mangé avec du beurre" },
+      { word: "car", hint: "Moyen de transport à 4 roues" },
+      { word: "bus", hint: "Transport public" },
+      { word: "train", hint: "Se déplace sur des rails" },
+      { word: "tree", hint: "Plante très grande" },
+      { word: "flower", hint: "Belle et souvent colorée" },
+      { word: "grass", hint: "Couvre les champs" },
+      { word: "blue", hint: "Couleur du ciel" },
+      { word: "green", hint: "Couleur de l'herbe" },
+      { word: "red", hint: "Couleur du sang" },
+      { word: "happy", hint: "État de joie" },
+      { word: "sad", hint: "Opposé de joyeux" },
+      { word: "run", hint: "Aller vite à pied" },
+      { word: "walk", hint: "Marcher" },
+      { word: "jump", hint: "Quitter le sol avec les pieds" },
+      { word: "fish", hint: "Vit dans l'eau" },
+      { word: "cow", hint: "Fournit du lait" },
+      { word: "pig", hint: "Animal de ferme rose" },
+      { word: "egg", hint: "Pondue par la poule" },
+      { word: "nose", hint: "Partie du visage pour sentir" },
+      { word: "eye", hint: "Partie du corps pour voir" },
+      { word: "ear", hint: "Partie pour entendre" },
+      { word: "mouth", hint: "Pour parler et manger" },
+      { word: "hand", hint: "À l'extrémité du bras" },
+      { word: "foot", hint: "Pour marcher" },
+      { word: "hat", hint: "Couvre la tête" },
+      { word: "shirt", hint: "Haut du vêtement" },
+      { word: "pants", hint: "Vêtement pour les jambes" },
+      { word: "shoe", hint: "Pour les pieds" },
+      { word: "cold", hint: "Pas chaud" },
+      { word: "hot", hint: "Opposé de froid" },
+      { word: "ice", hint: "Eau congelée" },
+      { word: "snow", hint: "Blanche et tombe en hiver" },
+      { word: "rain", hint: "Tombe des nuages" },
+      { word: "wind", hint: "Souffle dehors" },
+      { word: "clock", hint: "Donne l'heure" },
+      { word: "phone", hint: "Permet de téléphoner" },
+      { word: "door", hint: "On l'ouvre pour entrer" },
+      { word: "window", hint: "Pour voir dehors" },
+      { word: "key", hint: "Ouvre une serrure" },
+      { word: "light", hint: "Éclaire la pièce" },
+      { word: "dark", hint: "Absence de lumière" },
+      { word: "star", hint: "Brille dans le ciel" },
+      { word: "cloud", hint: "Blanc ou gris dans le ciel" },
+      { word: "river", hint: "Coulent vers la mer" },
+      { word: "sea", hint: "Grande étendue d'eau salée" },
+      { word: "lake", hint: "Étendue d'eau entourée de terre" },
+      { word: "mountain", hint: "Très haute colline" },
+      { word: "hill", hint: "Petite montagne" },
+      { word: "sand", hint: "Sur la plage" },
+      { word: "beach", hint: "Lieu au bord de la mer" },
+      { word: "island", hint: "Terre entourée d'eau" },
+      { word: "music", hint: "On l'écoute avec plaisir" },
+      { word: "song", hint: "Chanté avec des paroles" },
+      { word: "dance", hint: "Mouvement en rythme" },
+      { word: "game", hint: "Activité amusante" },
+      { word: "toy", hint: "Objet pour jouer" },
+      { word: "ball", hint: "Sphérique et utilisé dans les sports" },
+      { word: "bike", hint: "Vélo" },
+      { word: "plane", hint: "Vole dans le ciel" },
+      { word: "boat", hint: "Va sur l'eau" },
+      { word: "train", hint: "Transport sur des rails" },
+      { word: "road", hint: "Voie de circulation" },
+      { word: "street", hint: "Rue" },
+      { word: "city", hint: "Grande ville" },
+      { word: "village", hint: "Petit groupe de maisons" },
+      { word: "store", hint: "Où l'on fait des achats" },
+      { word: "market", hint: "Lieu d'échange de biens" },
+      { word: "money", hint: "Utilisé pour acheter" },
+      { word: "coin", hint: "Pièce de monnaie" },
+      { word: "bank", hint: "Lieu où on garde l'argent" },
+      { word: "doctor", hint: "Soigne les gens" },
+      { word: "nurse", hint: "Aide le docteur" },
+      { word: "teacher", hint: "Travaille à l'école" },
+      { word: "student", hint: "Apprend à l'école" },
+      { word: "paper", hint: "On écrit dessus" },
+      { word: "desk", hint: "Table d'écolier" },
+      { word: "black", hint: "Couleur très sombre" },
+      { word: "white", hint: "Couleur de la neige" },
+      { word: "yellow", hint: "Couleur du soleil" },
+      { word: "orange", hint: "Couleur et fruit" },
+      { word: "pink", hint: "Couleur douce" },
+      { word: "purple", hint: "Mélange de rouge et bleu" }
+    
+    ];
+
+    let shuffledWords = [];
+    let currentWord = "";
+    let currentHint = "";
+    let maskedArray = [];
+    let lives = 3;
+    let score = 0;
+    let currentIndex = 0;
+    let highScore = localStorage.getItem("highScore") || 0;
+
+    function shuffleArray(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function generateMaskedArray(word) {
+      return word.split('').map((c, i) => Math.random() < 0.3 ? c : '_');
+    }
+
+    function displayMaskedWord() {
+      document.getElementById('masked-word').textContent = maskedArray.join(' ');
+    }
+
+    function updateHearts() {
+      document.getElementById('hearts').innerHTML = '♥ '.repeat(lives);
+    }
+
+    function updateScore() {
+      document.getElementById('score').textContent = `Score: ${score}`;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("highScore", highScore);
+      }
+      document.getElementById('high-score').textContent = `Meilleur score: ${highScore}`;
+    }
+
+    function updateLetterButtons() {
+      const buttonContainer = document.getElementById('letter-buttons');
+      buttonContainer.innerHTML = '';
+      const requiredLetters = new Set(currentWord.split(''));
+      let options = Array.from(requiredLetters);
+      while (options.length < 10) {
+        let randChar = String.fromCharCode(97 + Math.floor(Math.random() * 26));
+        if (!options.includes(randChar)) options.push(randChar);
+      }
+      shuffleArray(options).forEach(letter => {
+        const btn = document.createElement('button');
+        btn.textContent = letter;
+        btn.onclick = () => handleLetterClick(letter, btn);
+        buttonContainer.appendChild(btn);
+      });
+    }
+
+    function handleLetterClick(letter, btn) {
+      let found = false;
+      for (let i = 0; i < currentWord.length; i++) {
+        if (currentWord[i] === letter && maskedArray[i] === '_') {
+          maskedArray[i] = letter;
+          found = true;
+        }
+      }
+      btn.classList.add("used-letter");
+      displayMaskedWord();
+
+      if (!found) {
+        lives--;
+        updateHearts();
+        document.getElementById('feedback').textContent = `❌ Mauvaise lettre : "${letter}"`;
+        if (lives === 0) {
+          document.getElementById('feedback').textContent = `❌ Perdu ! Le mot était "${currentWord}".`;
+          document.getElementById('new-game').style.display = 'inline-block';
+          document.getElementById('letter-buttons').innerHTML = '';
+        }
+      } else {
+        document.getElementById('feedback').textContent = `✅ Bien vu !`;
+        if (!maskedArray.includes('_')) {
+          let earned = lives === 3 ? 100 : lives === 2 ? 70 : 30;
+          score += earned;
+          updateScore();
+          document.getElementById('feedback').textContent = `✨ Bravo ! (+${earned} points)`;
+          setTimeout(nextWord, 1500);
+        }
+      }
+    }
+
+    function nextWord() {
+      if (currentIndex >= shuffledWords.length) {
+        document.getElementById('feedback').textContent = "🎉 Tous les mots trouvés !";
+        document.getElementById('new-game').style.display = 'inline-block';
+        document.getElementById('letter-buttons').innerHTML = '';
+        return;
+      }
+      const entry = shuffledWords[currentIndex++];
+      currentWord = entry.word;
+      currentHint = entry.hint;
+      document.getElementById('hint').textContent = `Indice : ${currentHint}`;
+      maskedArray = generateMaskedArray(currentWord);
+      displayMaskedWord();
+      updateLetterButtons();
+      lives = 3;
+      updateHearts();
+    }
+
+    function startGame() {
+      score = 0;
+      currentIndex = 0;
+      lives = 3;
+      shuffledWords = shuffleArray([...wordsWithHints]);
+      updateScore();
+      document.getElementById('feedback').textContent = "";
+      document.getElementById('new-game').style.display = 'none';
+      nextWord();
+    }
+
+    startGame();
+  </script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('Service Worker enregistré avec succès'))
+      .catch(err => console.log('Erreur Service Worker :', err));
+  }
+</script>
+</body>
+</html>
