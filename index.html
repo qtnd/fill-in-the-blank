@@ -233,7 +233,19 @@
     }
 
     function generateMaskedArray(word) {
-      return word.split('').map((c, i) => Math.random() < 0.3 ? c : '_');
+    const masked = Array(word.length).fill('_');
+  const indices = [...Array(word.length).keys()];
+
+  // Mélange les indices
+  indices.sort(() => Math.random() - 0.5);
+
+  // Révèle maximum 2 lettres (ou moins si le mot est très court)
+  const lettersToReveal = Math.min(2, word.length);
+  for (let i = 0; i < lettersToReveal; i++) {
+    masked[indices[i]] = word[indices[i]];
+  }
+
+  return masked;
     }
 
     function displayMaskedWord() {
